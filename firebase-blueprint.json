@@ -1,0 +1,112 @@
+{
+  "entities": {
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "Private user account profile, personal details, beauty preferences, and notification/privacy settings.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fullName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "preferredName": { "type": "string", "maxLength": 80 },
+        "email": { "type": "string", "format": "email", "maxLength": 180 },
+        "dateOfBirth": { "type": "string", "maxLength": 20 },
+        "photoDataUrl": { "type": "string", "maxLength": 180000 },
+        "termsAcceptedAt": { "type": "string", "maxLength": 40 },
+        "notificationPrefs": { "type": "object" },
+        "privacyPrefs": { "type": "object" },
+        "beautyPrefs": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "fullName", "email", "createdAt", "updatedAt"]
+    },
+    "SkinProfile": {
+      "title": "SkinProfile",
+      "description": "User's private skincare questionnaire answers and budget/texture preferences.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "skinType": { "type": "string", "enum": ["normal", "dry", "oily", "combination", "unsure"] },
+        "concerns": { "type": "array" },
+        "sensitivities": { "type": "array" },
+        "customAllergyNote": { "type": "string", "maxLength": 300 },
+        "goals": { "type": "array" },
+        "budget": { "type": "string", "enum": ["accessible", "curated", "luxury", "flexible"] },
+        "preferences": { "type": "array" },
+        "completedAt": { "type": "string", "maxLength": 40 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "skinType", "concerns", "sensitivities", "goals", "budget", "preferences", "updatedAt"]
+    },
+    "UserRoutines": {
+      "title": "UserRoutines",
+      "description": "User's saved products, morning/evening routine sequences, and daily consistency records.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "savedProductIds": { "type": "array" },
+        "amSteps": { "type": "array" },
+        "pmSteps": { "type": "array" },
+        "consistencyDays": { "type": "array" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "savedProductIds", "amSteps", "pmSteps", "consistencyDays", "updatedAt"]
+    },
+    "JournalEntry": {
+      "title": "JournalEntry",
+      "description": "Private dated skin journal reflection and hydration/comfort ratings.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "date": { "type": "string", "minLength": 8, "maxLength": 20 },
+        "hydrationRating": { "type": "number" },
+        "comfortRating": { "type": "number" },
+        "note": { "type": "string", "minLength": 1, "maxLength": 1500 },
+        "tags": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "date", "hydrationRating", "comfortRating", "note", "tags", "createdAt"]
+    },
+    "AnalysisHistory": {
+      "title": "AnalysisHistory",
+      "description": "Saved demonstration skin analysis preview snapshots for progress tracking.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "maxLength": 40 },
+        "sourceLabel": { "type": "string", "maxLength": 140 },
+        "isDemonstration": { "type": "boolean" },
+        "summary": { "type": "string", "maxLength": 1200 },
+        "observations": { "type": "array" },
+        "possibleConcerns": { "type": "array" },
+        "confidenceNote": { "type": "string", "maxLength": 600 },
+        "educationalGuidance": { "type": "array" },
+        "recommendedIngredients": { "type": "array" },
+        "savedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "createdAt", "sourceLabel", "isDemonstration", "summary", "observations", "possibleConcerns", "confidenceNote", "educationalGuidance", "recommendedIngredients", "savedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserAccount" },
+      "description": "Private user account profile document owned exclusively by {userId}."
+    },
+    "/users/{userId}/beauty/skinProfile": {
+      "schema": { "$ref": "#/entities/SkinProfile" },
+      "description": "Private skin questionnaire document for {userId}."
+    },
+    "/users/{userId}/beauty/routines": {
+      "schema": { "$ref": "#/entities/UserRoutines" },
+      "description": "Private AM/PM routine steps, saved product IDs, and consistency tracker for {userId}."
+    },
+    "/users/{userId}/journal/{entryId}": {
+      "schema": { "$ref": "#/entities/JournalEntry" },
+      "description": "Private skin journal entries owned by {userId}."
+    },
+    "/users/{userId}/analyses/{analysisId}": {
+      "schema": { "$ref": "#/entities/AnalysisHistory" },
+      "description": "Private demonstration skin analysis snapshots saved by {userId}."
+    }
+  }
+}

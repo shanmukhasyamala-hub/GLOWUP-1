@@ -1,0 +1,6 @@
+{
+  "name": "GLOWUP — Your Personal AI Beauty Assistant",
+  "description": "An immersive cinematic 3D beauty intelligence platform for personalized skin profiling, demonstration skin analysis, curated product discovery, and AM/PM skincare routines.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

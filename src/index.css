@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --glow-blush: #F5DDE6;
+    --glow-lavender: #E8DFF5;
+    --glow-ivory: #FFF9F0;
+    --glow-rosegold: #D9B18C;
+    --glow-plum: #67445B;
+    --glow-obsidian: #160F14;
+    --font-serif: 'Cormorant Garamond', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    background-color: #160F14;
+    color: #FFF9F0;
+    scroll-behavior: auto;
+    overflow-x: hidden;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #160F14;
+    color: #FFF9F0;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, .font-editorial {
+    font-family: var(--font-serif);
+    text-wrap: balance;
+  }
+}
+
+/* Editorial utilities */
+.font-editorial {
+  font-family: var(--font-serif);
+}
+
+.font-interface {
+  font-family: var(--font-sans);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Luxury glass surfaces without heavy backdrop-blur over WebGL */
+.glow-glass {
+  background: linear-gradient(
+    145deg,
+    rgba(36, 23, 32, 0.84) 0%,
+    rgba(24, 15, 21, 0.78) 100%
+  );
+  border: 1px solid rgba(255, 249, 240, 0.14);
+  box-shadow: 0 24px 60px rgba(10, 5, 8, 0.45);
+}
+
+.glow-glass-soft {
+  background: linear-gradient(
+    145deg,
+    rgba(245, 221, 230, 0.11) 0%,
+    rgba(232, 223, 245, 0.08) 100%
+  );
+  border: 1px solid rgba(245, 221, 230, 0.18);
+  box-shadow: 0 18px 44px rgba(10, 5, 8, 0.35);
+}
+
+.glow-glass-light {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 249, 240, 0.92) 0%,
+    rgba(245, 221, 230, 0.86) 100%
+  );
+  border: 1px solid rgba(103, 68, 91, 0.18);
+  color: #2A1924;
+}
+
+/* Subtle custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #160F14;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(217, 177, 140, 0.35);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(217, 177, 140, 0.6);
+}
+
+/* Accessible focus outlines */
+:focus-visible {
+  outline: 2px solid #D9B18C;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

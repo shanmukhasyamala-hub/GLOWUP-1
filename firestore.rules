@@ -1,0 +1,290 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUserAccount(data, userId) {
+      return data.keys().hasAll(['uid', 'fullName', 'email', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'uid',
+          'fullName',
+          'preferredName',
+          'email',
+          'dateOfBirth',
+          'photoDataUrl',
+          'termsAcceptedAt',
+          'notificationPrefs',
+          'privacyPrefs',
+          'beautyPrefs',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.uid == userId
+        && data.uid == request.auth.uid
+        && data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 120
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 180
+        && (!('preferredName' in data) || (data.preferredName is string && data.preferredName.size() <= 80))
+        && (!('dateOfBirth' in data) || (data.dateOfBirth is string && data.dateOfBirth.size() <= 20))
+        && (!('photoDataUrl' in data) || (data.photoDataUrl is string && data.photoDataUrl.size() <= 180000))
+        && (!('termsAcceptedAt' in data) || (data.termsAcceptedAt is string && data.termsAcceptedAt.size() <= 40))
+        && (!('notificationPrefs' in data) || (
+          data.notificationPrefs is map
+          && data.notificationPrefs.keys().hasOnly(['routineReminders', 'ingredientUpdates', 'weeklyDigest'])
+        ))
+        && (!('privacyPrefs' in data) || (
+          data.privacyPrefs is map
+          && data.privacyPrefs.keys().hasOnly(['privateProfile', 'analyticsOptIn'])
+        ))
+        && (!('beautyPrefs' in data) || (
+          data.beautyPrefs is map
+          && data.beautyPrefs.keys().hasOnly(['preferredCategories', 'preferredIngredients', 'avoidIngredients', 'amPmPreference'])
+          && (!('preferredCategories' in data.beautyPrefs) || (data.beautyPrefs.preferredCategories is list && data.beautyPrefs.preferredCategories.size() <= 12))
+          && (!('preferredIngredients' in data.beautyPrefs) || (data.beautyPrefs.preferredIngredients is list && data.beautyPrefs.preferredIngredients.size() <= 20))
+          && (!('avoidIngredients' in data.beautyPrefs) || (data.beautyPrefs.avoidIngredients is list && data.beautyPrefs.avoidIngredients.size() <= 20))
+          && (!('amPmPreference' in data.beautyPrefs) || (data.beautyPrefs.amPmPreference is string && data.beautyPrefs.amPmPreference.size() <= 200))
+        ))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSkinProfile(data, userId) {
+      return data.keys().hasAll(['ownerId', 'skinType', 'concerns', 'sensitivities', 'goals', 'budget', 'preferences', 'updatedAt'])
+        && data.keys().hasOnly([
+          'ownerId',
+          'skinType',
+          'concerns',
+          'sensitivities',
+          'customAllergyNote',
+          'goals',
+          'budget',
+          'preferences',
+          'completedAt',
+          'updatedAt'
+        ])
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.skinType in ['normal', 'dry', 'oily', 'combination', 'unsure']
+        && data.concerns is list && data.concerns.size() <= 10
+        && data.sensitivities is list && data.sensitivities.size() <= 12
+        && (!('customAllergyNote' in data) || (data.customAllergyNote is string && data.customAllergyNote.size() <= 300))
+        && data.goals is list && data.goals.size() <= 10
+        && data.budget in ['accessible', 'curated', 'luxury', 'flexible']
+        && data.preferences is list && data.preferences.size() <= 10
+        && (!('completedAt' in data) || (data.completedAt is string && data.completedAt.size() <= 40))
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidRoutines(data, userId) {
+      return data.keys().hasAll(['ownerId', 'savedProductIds', 'amSteps', 'pmSteps', 'consistencyDays', 'updatedAt'])
+        && data.keys().hasOnly([
+          'ownerId',
+          'savedProductIds',
+          'amSteps',
+          'pmSteps',
+          'consistencyDays',
+          'updatedAt'
+        ])
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.savedProductIds is list && data.savedProductIds.size() <= 50
+        && data.amSteps is list && data.amSteps.size() <= 20
+        && data.pmSteps is list && data.pmSteps.size() <= 20
+        && data.consistencyDays is list && data.consistencyDays.size() <= 90
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidJournalEntry(data, userId) {
+      return data.keys().hasAll(['ownerId', 'date', 'hydrationRating', 'comfortRating', 'note', 'tags', 'createdAt'])
+        && data.keys().hasOnly(['ownerId', 'date', 'hydrationRating', 'comfortRating', 'note', 'tags', 'createdAt'])
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.date is string && data.date.size() >= 8 && data.date.size() <= 20
+        && data.hydrationRating is number && data.hydrationRating >= 1 && data.hydrationRating <= 5
+        && data.comfortRating is number && data.comfortRating >= 1 && data.comfortRating <= 5
+        && data.note is string && data.note.size() >= 1 && data.note.size() <= 1500
+        && data.tags is list && data.tags.size() <= 8
+        && data.createdAt is timestamp;
+    }
+
+    function isValidAnalysisHistory(data, userId) {
+      return data.keys().hasAll([
+          'ownerId',
+          'createdAt',
+          'sourceLabel',
+          'isDemonstration',
+          'summary',
+          'observations',
+          'possibleConcerns',
+          'confidenceNote',
+          'educationalGuidance',
+          'recommendedIngredients',
+          'savedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId',
+          'createdAt',
+          'sourceLabel',
+          'isDemonstration',
+          'summary',
+          'observations',
+          'possibleConcerns',
+          'confidenceNote',
+          'educationalGuidance',
+          'recommendedIngredients',
+          'savedAt'
+        ])
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.createdAt is string && data.createdAt.size() <= 40
+        && data.sourceLabel is string && data.sourceLabel.size() <= 140
+        && data.isDemonstration == true
+        && data.summary is string && data.summary.size() <= 1200
+        && data.observations is list && data.observations.size() <= 6
+        && data.possibleConcerns is list && data.possibleConcerns.size() <= 10
+        && data.confidenceNote is string && data.confidenceNote.size() <= 600
+        && data.educationalGuidance is list && data.educationalGuidance.size() <= 8
+        && data.recommendedIngredients is list && data.recommendedIngredients.size() <= 12
+        && data.savedAt is timestamp;
+    }
+
+    // Strict PII & User Ownership Isolation
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId) && isVerified();
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isVerified()
+        && isValidUserAccount(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isVerified()
+        && isValidUserAccount(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'fullName',
+          'preferredName',
+          'email',
+          'dateOfBirth',
+          'photoDataUrl',
+          'termsAcceptedAt',
+          'notificationPrefs',
+          'privacyPrefs',
+          'beautyPrefs',
+          'updatedAt'
+        ]);
+      allow delete: if isValidId(userId) && isOwner(userId) && isVerified();
+
+      match /beauty/skinProfile {
+        allow get: if isValidId(userId) && isOwner(userId) && isVerified();
+        allow create: if isValidId(userId)
+          && isOwner(userId)
+          && isVerified()
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && isValidSkinProfile(incoming(), userId)
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && isOwner(userId)
+          && isVerified()
+          && isValidSkinProfile(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'skinType',
+            'concerns',
+            'sensitivities',
+            'customAllergyNote',
+            'goals',
+            'budget',
+            'preferences',
+            'completedAt',
+            'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && isOwner(userId) && isVerified();
+      }
+
+      match /beauty/routines {
+        allow get: if isValidId(userId) && isOwner(userId) && isVerified();
+        allow create: if isValidId(userId)
+          && isOwner(userId)
+          && isVerified()
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && isValidRoutines(incoming(), userId)
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && isOwner(userId)
+          && isVerified()
+          && isValidRoutines(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'savedProductIds',
+            'amSteps',
+            'pmSteps',
+            'consistencyDays',
+            'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && isOwner(userId) && isVerified();
+      }
+
+      match /journal/{entryId} {
+        allow get: if isValidId(userId) && isValidId(entryId) && isOwner(userId) && isVerified();
+        allow list: if isValidId(userId) && isOwner(userId) && isVerified() && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(entryId)
+          && isOwner(userId)
+          && isVerified()
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && isValidJournalEntry(incoming(), userId)
+          && incoming().createdAt == request.time;
+        allow update: if false;
+        allow delete: if isValidId(userId) && isValidId(entryId) && isOwner(userId) && isVerified();
+      }
+
+      match /analyses/{analysisId} {
+        allow get: if isValidId(userId) && isValidId(analysisId) && isOwner(userId) && isVerified();
+        allow list: if isValidId(userId) && isOwner(userId) && isVerified() && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(analysisId)
+          && isOwner(userId)
+          && isVerified()
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && isValidAnalysisHistory(incoming(), userId)
+          && incoming().savedAt == request.time;
+        allow update: if false;
+        allow delete: if isValidId(userId) && isValidId(analysisId) && isOwner(userId) && isVerified();
+      }
+    }
+  }
+}
